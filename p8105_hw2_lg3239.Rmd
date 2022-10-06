@@ -24,10 +24,6 @@ NYC_trans =
     ada) %>%
   mutate(entry = recode(entry, 'YES' = TRUE, 'NO' = FALSE))
 ```
-
-```{r}
-view(NYC_trans)
-```
 This dataset contains variables `r names(NYC_trans)`. It has `r nrow(NYC_trans)` rows and `r ncol(NYC_trans)` columns. The cleaning steps begin with importing the file and specifying the `route` columns all be character type. Then using `select()` to select the variables that we want. `mutate()` and `recode()` are used to transform `entry` from character type to logical values. However, this dataset is not tidy because the route numbers are supposed to be values of a variable route.
 
 ```{r}
@@ -85,9 +81,9 @@ mr_trash_wheel =
   janitor::clean_names() %>%
   mutate(sports_balls = as.integer(round(sports_balls, digits = 0)))
 mr_trash_wheel['trash_wheel'] = 'mr_trash'
-view(mr_trash_wheel)
 ```
 `read_excel()` with specified `sheet` number and `range` is used to import the Mr.Trash Wheel dataset. For cleaning, `janitor::clean_names()` is used. `mutate()`, `round()`, and `as.integer()` are used to round the number of sports balls to the nearest integer. An addition variable `trash_wheel` with value `mr_trash` is added, specifying the dataset it belongs to.
+\
 This dataset contains `r names(mr_trash_wheel)`, with `r nrow(mr_trash_wheel)` rows and `r ncol(mr_trash_wheel)` columns. It has the information about the various trash collected according to date.
 
 ```{r}
@@ -97,7 +93,7 @@ prof_trash_wheel =
   mutate(year = as.character(year))
 prof_trash_wheel['trash_wheel'] = 'prof_trash'
 ```
-Similarly, `read_excel()` with specified `sheet` number and `range` is used to import the Professor Trash Wheel dataset. For cleaning, `janitor::clean_names()` is used. `mutate()` is used to conver `year` variable to character type as same as Mr.Trash Wheel. An addition variable `trash_wheel` with value `prof_trash` is added, specifying the dataset it belongs to.
+Similarly, `read_excel()` with specified `sheet` number and `range` is used to import the Professor Trash Wheel dataset. For cleaning, `janitor::clean_names()` is used. `mutate()` is used to conver `year` variable to character type as same as Mr.Trash Wheel. An addition variable `trash_wheel` with value `prof_trash` is added, specifying the dataset it belongs to.\
 This dataset contains `r names(prof_trash_wheel)`, with `r nrow(prof_trash_wheel)` rows and `r ncol(prof_trash_wheel)` columns. It has the information about the various trash collected according to date. But it does not have the `sports_balls` variable as Mr.Trash Wheel.
 
 ```{r}
@@ -113,7 +109,7 @@ prof_trash_wheel %>%
   pull(weight_tons) %>%
   sum()
 ```
-`full_join()` is used to merge the two datasets, keeping data that appear in either of the two. 
+`full_join()` is used to merge the two datasets, keeping data that appear in either of the two.\
 The resulting dataset has variables `r names(trash_wheel_df)`, and is `r nrow(trash_wheel_df)` x `r ncol(trash_wheel_df)`.
 
 Using `prof_trash_wheel` on the `weight_tons` variable, and using `sum()`, the total weight of trash collected by Professor Trash Wheel is 190.12 tons.
@@ -130,10 +126,8 @@ pols_month_df =
   mutate(president = case_when(prez_gop == 1 ~ "gop",
                                prez_dem == 1 ~ "dem")) %>%
   select(-prez_gop, -prez_dem, -day)
-
-view(pols_month_df)
 ```
-`read_csv()` is used to import the pols_month dataset. `separate()` is used with `sep = "-"` to breakup `mon` into `year`, `month`, and `day`. Then `mutate()` is used to change the `month` to numeric values (without zero) and using `month.abb[]` to obtain month abbreviation. `mutate()` is also used with `case_when()`, specifying when `prez_gop` is 1, add the `president` variable with value `gop`, and when `prez_dem` is 1, add with value `dem`. Finally, remove the `prez_gop`, `prez_dem`, `day` columns by `select()`.
+`read_csv()` is used to import the pols_month dataset. `separate()` is used with `sep = "-"` to breakup `mon` into `year`, `month`, and `day`. Then `mutate()` is used to change the `month` to numeric values (without zero) and using `month.abb[]` to obtain month abbreviation. `mutate()` is also used with `case_when()`, specifying when `prez_gop` is 1, add the `president` variable with value `gop`, and when `prez_dem` is 1, add with value `dem`. Finally, remove the `prez_gop`, `prez_dem`, `day` columns by `select()`.\
 This dataset contains `r nrow(pols_month_df)` observations of `r ncol(pols_month_df)` variables related to the number of national politicians who are democratic or republican at the time. The variables are `r names(pols_month_df)`. The year range is from `r pols_month_df %>% pull(year) %>% min()` to `r pols_month_df %>% pull(year) %>% max()`.
 
 ```{r}
@@ -147,10 +141,8 @@ snp_df =
   mutate(year = as.character(year)) %>%
   relocate(year) %>%
   arrange(year, month)
-
-view(snp_df)
 ```
-`read_csv()` is used to import the dataset. `separate()` is used with `sep = "/"` to breakup `date` into `month`, `day`, and `year`. Then `mutate()` is used to change the `month` to numeric values (without zero) and using `month.abb[]` to obtain month abbreviation. After removing `day` using `select()`, `mutate()` is used to convert year to numeric type, and with `if_else()` to convert year that is greater than 49 to four digits 19xx, otherwise to 20xx. `year` should be in character type. Finally, `relocate()` year to first column and `arrange()` according to year and month.
+`read_csv()` is used to import the dataset. `separate()` is used with `sep = "/"` to breakup `date` into `month`, `day`, and `year`. Then `mutate()` is used to change the `month` to numeric values (without zero) and using `month.abb[]` to obtain month abbreviation. After removing `day` using `select()`, `mutate()` is used to convert year to numeric type, and with `if_else()` to convert year that is greater than 49 to four digits 19xx, otherwise to 20xx. `year` should be in character type. Finally, `relocate()` year to first column and `arrange()` according to year and month.\
 This dataset contains `r nrow(snp_df)` observations of `r ncol(snp_df)` variables related to representative measure of stock market. The variables are `r names(snp_df)`, in which `close` is the closing values of the S&P stock index on the associated date. The year range is from `r snp_df %>% pull(year) %>% min()` to `r snp_df %>% pull(year) %>% max()`.
 
 ```{r}
@@ -163,18 +155,14 @@ unemploy_df =
   ) %>%
   janitor::clean_names() %>%
   mutate(year = as.character(year))
-
-view(unemploy_df)
 ```
-`read_csv()` is used to import the dataset. `pivit_longer()` is used on variables from `Jan` to `Dec` to cast the month and rate as distinct variables. `mutate()` changes `year` to character type.
+`read_csv()` is used to import the dataset. `pivit_longer()` is used on variables from `Jan` to `Dec` to cast the month and rate as distinct variables. `mutate()` changes `year` to character type.\
 This dataset contains `r nrow(unemploy_df)` observations of `r ncol(unemploy_df)` variables. The variables are `r names(unemploy_df)`. The year range is from `r unemploy_df %>% pull(year) %>% min()` to `r unemploy_df %>% pull(year) %>% max()`.
 
 ```{r}
 result_df = pols_month_df %>%
   left_join(snp_df) %>%
   left_join(unemploy_df)
-
-view(result_df)
 ```
-Merge `snp_df` to `pols_month_df` using `left_join()`, and `unemploy_df` to the resulting dataset using `left_join()`.
+Merge `snp_df` to `pols_month_df` using `left_join()`, and `unemploy_df` to the resulting dataset using `left_join()`.\
 The final dataset contains `r nrow(result_df)` observations of `r ncol(result_df)` variables. The year range is from `r result_df %>% pull(year) %>% min()` to `r result_df %>% pull(year) %>% max()`. The variables are `r names(result_df)`.
