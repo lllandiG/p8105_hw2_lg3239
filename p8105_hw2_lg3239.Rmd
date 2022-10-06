@@ -3,4 +3,174 @@ title: "p8105_hw2_lg3239"
 author: "Landi Guo"
 date: "2022-10-04"
 output: github_document
+editor_options: 
+  chunk_output_type: console
 ---
+```{r, echo=FALSE}
+library(tidyverse)
+library(readxl)
+```
+
+## Problem 1
+```{r}
+NYC_trans = 
+  read_csv(
+    "files/NYC_Transit_Subway_Entrance_And_Exit_Data.csv", 
+    col_types = cols(Route8 = "c", Route9 = "c", Route10 = "c", Route11 = "c")) %>%
+  janitor::clean_names() %>%
+  select(
+    line, station_name, station_latitude, station_longitude, 
+    starts_with("route"), entry, exit_only, vending, entrance_type, 
+    ada) %>%
+  mutate(entry = recode(entry, 'YES' = TRUE, 'NO' = FALSE))
+```
+
+```{r}
+view(NYC_trans)
+```
+This dataset contains variables `r names(NYC_trans)`. It has `r nrow(NYC_trans)` rows and `r ncol(NYC_trans)` columns. The cleaning steps begin with importing the file and specifying the `route` columns all be character type. Then using `select()` to select the variables that we want. `mutate()` and `recode()` are used to transform `entry` from character type to logical values. However, this dataset is not tidy because the route numbers are supposed to be values of a variable route.
+
+```{r}
+NYC_trans %>%
+  select(line, station_name) %>%
+  distinct()
+```
+There are 465 distinct stations. 
+`distinct()` gives all unique combinations between line and station names.
+
+```{r}
+NYC_trans %>%
+  filter(ada == TRUE) %>%
+  select(line, station_name) %>%
+  distinct()
+```
+84 stations are ADA compliant
+Use `filter()` to select the dataframe according to ADA compliance, then select the `line` and `station_name` to form distinct combinations.
+
+```{r}
+NYC_trans %>%
+  filter(vending == 'NO') %>%
+  pull(entry) %>%
+  mean()
+```
+About 0.38 of station entrances/exits without vending allow entry.
+Use `filter()` to select the dataframe according to vending availability, then choose the `entry` value since its logical, `mean()` is able to cast it as numeric.
+
+```{r}
+NYC_trans %>%
+  pivot_longer(
+    route1:route11,
+    names_to = 'route_num',
+    values_to = 'route') %>%
+  filter(route == 'A') %>%
+  select(line, station_name) %>%
+  distinct()
+
+NYC_trans %>%
+  pivot_longer(
+    route1:route11,
+    names_to = 'route_num',
+    values_to = 'route') %>%
+  filter(route == 'A', ada == TRUE) %>%
+  select(line, station_name) %>%
+  distinct()
+```
+There are 60 distinct stations serve the A train, and 17 of them are ADA compliant.
+`pivit_longer()` is used to make route number and route name as distinct variables, and `filter()` is used according to train A and ADA compliance. Similar to steps above, obtain the unique combinations between line and station names.
+
+## Problem 2
+```{r}
+mr_trash_wheel = 
+  readxl::read_excel("files/Trash Wheel Collection Data.xlsx", sheet = 1, range = "A2:N549") %>%
+  janitor::clean_names() %>%
+  mutate(sports_balls = as.integer(round(sports_balls, digits = 0)))
+mr_trash_wheel['trash_wheel'] = 'mr_trash'
+view(mr_trash_wheel)
+```
+`read_excel()` with specified `sheet` number and `range` is used to import the Mr.Trash Wheel dataset. For cleaning, `janitor::clean_names()` is used. `mutate()`, `round()`, and `as.integer()` are used to round the number of sports balls to the nearest integer. An addition variable `trash_wheel` with value `mr_trash` is added, specifying the dataset it belongs to.
+This dataset contains `r names(mr_trash_wheel)`, with `r nrow(mr_trash_wheel)` rows and `r ncol(mr_trash_wheel)` columns. It has the information about the various trash collected according to date.
+
+```{r}
+prof_trash_wheel = 
+  readxl::read_excel("files/Trash Wheel Collection Data.xlsx", sheet = 2, range = "A2:M96") %>%
+  janitor::clean_names() %>%
+  mutate(year = as.character(year))
+prof_trash_wheel['trash_wheel'] = 'prof_trash'
+```
+Similarly, `read_excel()` with specified `sheet` number and `range` is used to import the Professor Trash Wheel dataset. For cleaning, `janitor::clean_names()` is used. `mutate()` is used to conver `year` variable to character type as same as Mr.Trash Wheel. An addition variable `trash_wheel` with value `prof_trash` is added, specifying the dataset it belongs to.
+This dataset contains `r names(prof_trash_wheel)`, with `r nrow(prof_trash_wheel)` rows and `r ncol(prof_trash_wheel)` columns. It has the information about the various trash collected according to date. But it does not have the `sports_balls` variable as Mr.Trash Wheel.
+
+```{r}
+trash_wheel_df =
+  full_join(mr_trash_wheel, prof_trash_wheel)
+
+mr_trash_wheel %>%
+  filter(year == '2020') %>%
+  pull(sports_balls) %>%
+  sum()
+
+prof_trash_wheel %>%
+  pull(weight_tons) %>%
+  sum()
+```
+`full_join()` is used to merge the two datasets, keeping data that appear in either of the two. 
+The resulting dataset has variables `r names(trash_wheel_df)`, and is `r nrow(trash_wheel_df)` x `r ncol(trash_wheel_df)`.
+
+Using `prof_trash_wheel` on the `weight_tons` variable, and using `sum()`, the total weight of trash collected by Professor Trash Wheel is 190.12 tons.
+Using `mr_trash_wheel`, `filter()` by 2020, on the `sports_balls` variable, and using `sum()`, the total number of sports balls collected by Mr. Trash Wheel in 2020 is 856.
+
+## Problem 3
+```{r}
+pols_month_df = 
+  read_csv("files/fivethirtyeight_datasets/pols-month.csv") %>%
+  janitor::clean_names() %>%
+  separate(mon, into = c("year", "month", "day"), sep = "-") %>%
+  mutate(month = gsub("0", "", month)) %>%
+  mutate(month = month.abb[as.numeric(month)]) %>%
+  mutate(president = case_when(prez_gop == 1 ~ "gop",
+                               prez_dem == 1 ~ "dem")) %>%
+  select(-prez_gop, -prez_dem, -day)
+
+view(pols_month_df)
+```
+`read_csv()` is used to import the pols_month dataset. `separate()` is used with `sep = "-"` to breakup `mon` into `year`, `month`, and `day`. Then `mutate()` is used to change the `month` to numeric values (without zero) and using `month.abb[]` to obtain month abbreviation. `mutate()` is also used with `case_when()`, specifying when `prez_gop` is 1, add the `president` variable with value `gop`, and when `prez_dem` is 1, add with value `dem`. Finally, remove the `prez_gop`, `prez_dem`, `day` columns by `select()`.
+This dataset contains `r nrow(pols_month_df)` observations of `r ncol(pols_month_df)` variables related to the number of national politicians who are democratic or republican at the time. The variables are `r names(pols_month_df)`. The year range is from `r pols_month_df %>% pull(year) %>% min()` to `r pols_month_df %>% pull(year) %>% max()`.
+
+```{r}
+snp_df = 
+  read_csv("files/fivethirtyeight_datasets/snp.csv") %>%
+  separate(date, into = c("month", "day", "year"), sep = "/") %>%
+  mutate(month = month.abb[as.numeric(month)]) %>%
+  select(-day) %>%
+  mutate(year = as.numeric(year)) %>%
+  mutate(year = if_else(year > 49, year + 1900, year + 2000)) %>%
+  mutate(year = as.character(year)) %>%
+  relocate(year) %>%
+  arrange(year, month)
+
+view(snp_df)
+```
+`read_csv()` is used to import the dataset. `separate()` is used with `sep = "/"` to breakup `date` into `month`, `day`, and `year`. Then `mutate()` is used to change the `month` to numeric values (without zero) and using `month.abb[]` to obtain month abbreviation. After removing `day` using `select()`, `mutate()` is used to convert year to numeric type, and with `if_else()` 
+Finally, remove the `prez_gop`, `prez_dem`, `day` columns by `select()`.
+```{r}
+unemploy_df = 
+  read_csv("files/fivethirtyeight_datasets/unemployment.csv") %>%
+  pivot_longer(
+    Jan:Dec,
+    names_to = "month",
+    values_to = "rate"
+  ) %>%
+  janitor::clean_names() %>%
+  mutate(year = as.character(year))
+
+view(unemploy_df)
+```
+
+```{r}
+result_df = pols_month_df %>%
+  left_join(snp_df) %>%
+  left_join(unemploy_df)
+
+view(result_df)
+```
+
